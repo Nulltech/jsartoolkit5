@@ -2,7 +2,7 @@
   "name": "jsartoolkit",
   "version": "0.0.0",
   "main": "js/index",
-  "typings": "js/index",  
+  "typings": "js/index",
   "description": "Emscripten port of ARToolKit to JavaScript",
   "keywords": [
     "ARToolKit",
@@ -28,7 +28,8 @@
     "jsdoc": "^3.4.0",
     "opener": "^1.4.3",
     "qunit": "^2.4.1",
-    "watch": "^0.18.0"
+    "watch": "^0.18.0",
+    "express": "^4.16.3"
   },
   "scripts": {
     "build": "cd emscripten/artoolkit5/ && emconfigure ./Configure && cd ../../ && node tools/makem.js; echo Built at `date`",
