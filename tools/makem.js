@@ -10,10 +10,11 @@ var
 	fs = require('fs'),
 	child;
 
-var HAVE_NFT = 0;
+var HAVE_NFT = 1;
 
 var EMSCRIPTEN_PATH = process.env.EMSCRIPTEN;
 var ARTOOLKIT5_ROOT = process.env.ARTOOLKIT5_ROOT || "../emscripten/artoolkit5";
+var LIBJPEG_ROOT = process.env.LIBJPEG_ROOT || "../emscripten/jpeg-6b";
 
 if (!EMSCRIPTEN_PATH) {
 	console.log("\nWarning: EMSCRIPTEN environment variable not found.")
@@ -128,7 +129,7 @@ FLAGS += ' -s USE_ZLIB=1';
 // FLAGS += ' -s FULL_ES2=1 '
 // FLAGS += ' -s NO_BROWSER=1 '; // for 20k less
 FLAGS += ' --memory-init-file 0 '; // for memless file
-
+FLAGS += ' -s "BINARYEN_TRAP_MODE=\'clamp\'" ';
 var PRE_FLAGS = ' --pre-js ' + path.resolve(__dirname, '../js/artoolkit.api.js') +' ';
 
 FLAGS += ' --bind ';
@@ -153,9 +154,10 @@ var INCLUDES = [
 	path.resolve(__dirname, ARTOOLKIT5_ROOT + '/include'),
 	OUTPUT_PATH,
 	SOURCE_PATH,
-	// 'lib/SRC/KPM/FreakMatcher',
+	path.resolve(__dirname, ARTOOLKIT5_ROOT + '/lib/SRC/KPM/FreakMatcher'),
 	// 'include/macosx-universal/',
 	// '../jpeg-6b',
+	path.resolve(__dirname, LIBJPEG_ROOT),
 ].map(function(s) { return '-I' + s }).join(' ');
 
 function format(str) {
@@ -182,7 +184,7 @@ var libjpeg_sources = 'jcapimin.c jcapistd.c jccoefct.c jccolor.c jcdctmgr.c jch
 		jdatadst.c jcinit.c jcmaster.c jcmarker.c jcmainct.c \
 		jcprepct.c jccoefct.c jccolor.c jcsample.c jchuff.c \
 		jcphuff.c jcdctmgr.c jfdctfst.c jfdctflt.c \
-		jfdctint.c'.split(/\s+/).join(' ../jpeg-6b/')
+		jfdctint.c'.split(/\s+/).join(' ' + path.resolve(__dirname, LIBJPEG_ROOT) + '/')
 
 function clean_builds() {
 	try {
@@ -214,7 +216,7 @@ var compile_kpm = format(EMCC + ' ' + INCLUDES + ' '
 		OUTPUT_PATH);
 
 var compile_libjpeg = format(EMCC + ' ' + INCLUDES + ' '
-	+ '../jpeg-6b/' +  libjpeg_sources
+	+ path.resolve(__dirname, LIBJPEG_ROOT) + '/' + libjpeg_sources
 	+ FLAGS + ' ' + DEFINES + ' -o {OUTPUT_PATH}libjpeg.bc ',
 		OUTPUT_PATH);
 
@@ -278,8 +280,8 @@ function addJob(job) {
 
 addJob(clean_builds);
 addJob(compile_arlib);
-// compile_kpm
-// addJob(compile_libjpeg);
+// addJob(compile_kpm);
+addJob(compile_libjpeg);
 addJob(compile_combine);
 addJob(compile_wasm);
 addJob(compile_combine_min);

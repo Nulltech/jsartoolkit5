@@ -138,6 +138,9 @@
 					for (var i in self.threeBarcodeMarkers) {
 						self.threeBarcodeMarkers[i].visible = false;
 					}
+					for (var i in self.threeNFTMarkers) {
+						self.threeNFTMarkers[i].visible = false;
+					}
 					for (var i in self.threeMultiMarkers) {
 						self.threeMultiMarkers[i].visible = false;
 						for (var j=0; j<self.threeMultiMarkers[i].markers.length; j++) {
@@ -187,6 +190,29 @@
 			this.threePatternMarkers[markerUID] = obj;
 			return obj;
 		};
+
+		/**
+			Creates a Three.js marker Object3D for the given NFT marker UID.
+			The marker Object3D tracks the NFT marker when it's detected in the video.
+			Use this after a successful artoolkit.loadNFTMarker call:
+			arController.loadNFTMarker('DataNFT/pinball', function(markerUID) {
+				var markerRoot = arController.createThreeNFTMarker(markerUID);
+				markerRoot.add(myFancyModel);
+				arScene.scene.add(markerRoot);
+			});
+			@param {number} markerUID The UID of the marker to track.
+			@param {number} markerWidth The width of the marker, defaults to 1.
+			@return {THREE.Object3D} Three.Object3D that tracks the given marker.
+		*/
+		ARController.prototype.createThreeNFTMarker = function(markerUID, markerWidth) {
+			this.setupThree();
+			var obj = new THREE.Object3D();
+			obj.markerTracker = this.trackNFTMarkerId(markerUID, markerWidth);
+			obj.matrixAutoUpdate = false;
+			this.threeNFTMarkers[markerUID] = obj;
+			return obj;
+		};
+
 
 		/**
 			Creates a Three.js marker Object3D for the given multimarker UID.
@@ -263,6 +289,21 @@
 			});
 
 			/*
+				Listen to getNFTMarker events to keep track of Three.js markers.
+			*/
+			this.addEventListener('getNFTMarker', function(ev) {
+				var marker = ev.data.marker;
+				var obj;
+
+				obj = this.threeNFTMarkers[ev.data.marker.id];
+
+				if (obj) {
+					obj.matrix.elements.set(ev.data.matrix);
+					obj.visible = true;
+				}
+			});
+
+			/*
 				Listen to getMultiMarker events to keep track of Three.js multimarkers.
 			*/
 			this.addEventListener('getMultiMarker', function(ev) {
@@ -302,6 +343,11 @@
 				Index of Three.js multimarkers, maps markerID -> THREE.Object3D.
 			*/
 			this.threeMultiMarkers = {};
+
+			/**
+				Index of Three.js NFT markers, maps markerID -> THREE.Object3D.
+			*/
+			this.threeNFTMarkers = {};
 		};
 
 	};

@@ -56,7 +56,7 @@
 #include <AR/ar.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <thread_sub.h>
+#include "thread_sub.h"
 
 
 //
