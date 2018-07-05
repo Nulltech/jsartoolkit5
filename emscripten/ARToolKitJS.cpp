@@ -22,6 +22,7 @@
 #include <AR/arFilterTransMat.h>
 #include <AR2/tracking.h>
 #include <KPM/kpm.h>
+#include <AR/paramGL.h>
 
 struct multi_marker {
 	int id;
@@ -204,20 +205,28 @@ extern "C" {
 	}
 
 	int detectNFTMarker(int id) {
-		if (arControllers.find(id) == arControllers.end()) { return -1; }
+
+		if (arControllers.find(id) == arControllers.end()) { return ARCONTROLLER_NOT_FOUND; }
 		arController *arc = &(arControllers[id]);
+
+		// // Convert video frame to AR2VideoBufferT
+        // AR2VideoBufferT buff = {0};
+        // buff.buff = arc->videoFrame;
+        // buff.fillFlag = 1;
+
+        // buff.buffLuma = arc->videoLuma;
 
 		KpmResult *kpmResult = NULL;
 		int kpmResultNum = -1;
 
-        kpmMatching( arc->kpmHandle, arc->videoFrame );
+        kpmMatching( arc->kpmHandle, arc->videoLuma );
         kpmGetResult( arc->kpmHandle, &kpmResult, &kpmResultNum );
         return kpmResultNum;
 	}
 
 	KpmHandle *createKpmHandle(ARParamLT *cparamLT) {
 		KpmHandle *kpmHandle;
-	    kpmHandle = kpmCreateHandle(cparamLT, AR_PIXEL_FORMAT_RGBA);
+	    kpmHandle = kpmCreateHandle(cparamLT);
 		return kpmHandle;
 	}
 
@@ -227,10 +236,6 @@ extern "C" {
 
 	int getKpmImageHeight(KpmHandle *kpmHandle) {
 		return kpmHandleGetYSize(kpmHandle);
-	}
-
-	int getKpmPixelSize(KpmHandle *kpmHandle) {
-		return arUtilGetPixelSize(kpmHandleGetPixelFormat(kpmHandle));
 	}
 
 	int setupAR2(int id) {
@@ -386,8 +391,8 @@ extern "C" {
 			arParamChangeSize(&(arc->param), arc->width, arc->height, &(arc->param));
 		}
 
-		// ARLOGi("*** Camera Parameter ***\n");
-		// arParamDisp(&(arc->param));
+		ARLOGi("*** Camera Parameter ***\n");
+		arParamDisp(&(arc->param));
 
 		deleteHandle(arc);
 
@@ -396,7 +401,7 @@ extern "C" {
 			return -1;
 		}
 
-		// ARLOGi("setCamera(): arParamLTCreated\n..%d, %d\n", (arc->paramLT->param).xsize, (arc->paramLT->param).ysize);
+		ARLOGi("setCamera(): arParamLTCreated\n..%d, %d\n", (arc->paramLT->param).xsize, (arc->paramLT->param).ysize);
 
 		// setup camera
 		if ((arc->arhandle = arCreateHandle(arc->paramLT)) == NULL) {
@@ -406,7 +411,7 @@ extern "C" {
 		// AR_DEFAULT_PIXEL_FORMAT
 		int set = arSetPixelFormat(arc->arhandle, arc->pixFormat);
 
-		// ARLOGi("setCamera(): arCreateHandle done\n");
+		ARLOGi("setCamera(): arCreateHandle done\n");
 
 		arc->ar3DHandle = ar3DCreateHandle(&(arc->param));
 		if (arc->ar3DHandle == NULL) {
@@ -414,12 +419,12 @@ extern "C" {
 			return -1;
 		}
 
-		// ARLOGi("setCamera(): ar3DCreateHandle done\n");
+		ARLOGi("setCamera(): ar3DCreateHandle done\n");
 
 		arPattAttach(arc->arhandle, arc->arPattHandle);
-		// ARLOGi("setCamera(): Pattern handler attached.\n");
+		ARLOGi("setCamera(): Pattern handler attached.\n");
 
-		//arglCameraFrustumRH(&((arc->paramLT)->param), arc->nearPlane, arc->farPlane, arc->cameraLens);
+		arglCameraFrustumRH(&((arc->paramLT)->param), arc->nearPlane, arc->farPlane, arc->cameraLens);
 
 		return 0;
 	}

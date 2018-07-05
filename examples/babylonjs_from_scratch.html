@@ -1,15 +1,54 @@
 <html>
-    <body>
 
-        <script src="js/third_party/babylon.js/babylon.2.5.max.js"></script>
-        <script src="../build/artoolkit.debug.js"></script>
-        <script src="../js/artoolkit.api.js"></script>
+<body>
 
-        <canvas id="renderCanvas"></canvas>
-        <video id="v" src="Data/output_4.mp4" width="320" height="240" loop="" controls="" autoplay
-               webkit-playsinline></video>
+    <script src="js/third_party/babylon.js/babylon.2.5.max.js"></script>
+    <script type='text/javascript'>
+        var Module = {};
 
-        <script>
+        function downloadWasm(url) {
+            return new Promise(function (resolve, reject) {
+                var wasmXHR = new XMLHttpRequest();
+                wasmXHR.open('GET', url, true);
+                wasmXHR.responseType = 'arraybuffer';
+                wasmXHR.onload = function () { resolve(wasmXHR.response); }
+                wasmXHR.onerror = function () { reject('error ' + wasmXHR.status); }
+                wasmXHR.send(null);
+            });
+        }
+
+        var wasm = downloadWasm('../build/artoolkit_wasm.wasm');
+
+        // Module.instantiateWasm is a user-implemented callback which the Emscripten runtime calls to perform
+        // the WebAssembly instantiation action. The callback function will be called with two parameters, imports
+        // and successCallback. imports is a JS object which contains all the function imports that need to be passed
+        // to the Module when instantiating, and once instantiated, the function should call successCallback() with
+        // the WebAssembly Instance object.
+        // The instantiation can be performed either synchronously or asynchronously. The return value of this function
+        // should contain the exports object of the instantiated Module, or an empty dictionary object {} if the
+        // instantiation is performed asynchronously, or false if instantiation failed.
+        Module.instantiateWasm = function (imports, successCallback) {
+            console.log('instantiateWasm: instantiating synchronously');
+            wasm.then(function (wasmBinary) {
+                console.log('wasm download finished, begin instantiating');
+                var wasmInstantiate = WebAssembly.instantiate(new Uint8Array(wasmBinary), imports).then(function (output) {
+                    console.log('wasm instantiation succeeded');
+                    successCallback(output.instance);
+                }).catch(function (e) {
+                    console.log('wasm instantiation failed! ' + e);
+                });
+            });
+            return {}; // Compiling asynchronously, no exports.
+        }
+    </script>
+    <script src="../build/artoolkit_wasm.js"></script>
+    <script src="../js/artoolkit.api.js"></script>
+
+    <canvas id="renderCanvas"></canvas>
+    <video id="v" src="Data/output_4.mp4" width="320" height="240" loop="" controls="" autoplay webkit-playsinline></video>
+
+    <script>
+        window.addEventListener('artoolkit-loaded', () => {
             var v = document.getElementById('v');
 
             // get the canvas DOM element
@@ -62,28 +101,18 @@
                 if (!arController) {
                     return;
                 }
-
-                arController.detectMarker(v);
+                arController.process(v);
+                //arController.detectMarker();
                 var markerNum = arController.getMarkerNum();
+                // console.log(markerNum);
 
                 if (markerNum > 0) {
-
-                    if (markerRoot.isVisible) {
-                        arController.getTransMatSquareCont(0, 1, markerRoot.markerMatrix, markerRoot.markerMatrix);
-                    } else {
-                        arController.getTransMatSquare(0 /* Marker index */, 1 /* Marker width */, markerRoot.markerMatrix);
-                    }
-
-                    markerRoot.isVisible = true;
-                    markerRoot.getChildMeshes().forEach(function (mesh) {
-                        mesh.isVisible = true
-                    });
-
-                    arController.arglCameraViewRHf(arController.transMatToGLMat(markerRoot.markerMatrix), markerRoot._worldMatrix.m);
+                    
+                    
                 } else {
-                    markerRoot.isVisible = false;
+                    //markerRoot.isVisible = false;
                     markerRoot.getChildMeshes().forEach(function (mesh) {
-                        mesh.isVisible = false;
+                        //mesh.isVisible = false;
                     });
                 }
 
@@ -99,7 +128,19 @@
                 arController = new ARController(320, 240, cameraParam);
                 arController.debugSetup();
 
-                camera.freezeProjectionMatrix(BABYLON.Matrix.FromArray(arController.getCameraMatrix()));
+                 arController.addEventListener('getMarker', function(ev) {
+                    console.log("Detected marker with ids:", ev.data.marker.id, ev.data.marker.idPatt, ev.data.marker.idMatrix);
+                    // console.log("Marker data", ev.data.marker);
+                    // console.log("Marker transform matrix:", [].join.call(ev.data.matrix, ', '));
+
+                    markerRoot.isVisible = true;
+                    markerRoot.getChildMeshes().forEach(function (mesh) {
+                        mesh.isVisible = true
+                    });
+                    arController.arglCameraViewRHf(arController.transMatToGLMat(ev.data.matrix), markerRoot._worldMatrix.m);
+                });
+
+                //camera.freezeProjectionMatrix(BABYLON.Matrix.FromArray(arController.getCameraMatrix()));
             };
             cameraParam.load('Data/camera_para.dat');
 
@@ -108,6 +149,8 @@
             window.addEventListener('resize', function () {
                 engine.resize();
             });
-        </script>
-    </body>
+        });
+    </script>
+</body>
+
 </html>

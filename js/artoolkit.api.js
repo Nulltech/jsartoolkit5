@@ -165,8 +165,17 @@
 			o.inPrevious = o.inCurrent;
 			o.inCurrent = false;
 		}
+		for(k in this.nftMarkers) {
+			o = this.nftMarkers[k];
+			o.inPrevious = o.inCurrent;
+			o.inCurrent = false;
+		}
 
-		console.log(markerNum);
+		this.dispatchEvent({
+			name: 'markerNum',
+			target: this,
+			data: markerNum
+		});
 
 		var i, j, visible, multiEachMarkerInfo;
 
@@ -225,13 +234,15 @@
 				visible.matrix.set(markerInfo.pose);
 				visible.inCurrent = true;
 				this.transMatToGLMat(visible.matrix, this.transform_mat);
+				this.transformGL_RH = this.arglCameraViewRHf(this.transform_mat);
 				this.dispatchEvent({
 					name: 'getNFTMarker',
 					target: this,
 					data: {
 						index: i,
 						marker: markerInfo,
-						matrix: this.transform_mat
+						matrix: this.transform_mat,
+						matrixGL_RH: this.transformGL_RH
 					}
 				});
 			}
@@ -365,6 +376,7 @@
 				inPrevious: false,
 				inCurrent: false,
 				matrix: new Float32Array(12),
+				matrixGL_RH: new Float64Array(12),
 				markerWidth: markerWidth || this.defaultMarkerWidth
 			};
 		}
@@ -1170,8 +1182,8 @@
 			this._debugMarker(this.getMarker(i));
         }
         if(this.transform_mat && this.transformGL_RH){
-            console.log("GL 4x4 Matrix: " + this.transform_mat);    
-            console.log("GL_RH 4x4 Mat: " + this.transformGL_RH);
+            // console.log("GL 4x4 Matrix: " + this.transform_mat);    
+            // console.log("GL_RH 4x4 Mat: " + this.transformGL_RH);
         }
 	};
 
@@ -1196,7 +1208,6 @@
 
 		this.dataHeap = new Uint8Array(Module.HEAPU8.buffer, this.framepointer, this.framesize);
         this.videoLuma = new Uint8Array(Module.HEAPU8.buffer, this.videoLumaPointer, this.framesize/4);
-
 		this.camera_mat = new Float64Array(Module.HEAPU8.buffer, params.camera, 16);
 		this.marker_transform_mat = new Float64Array(Module.HEAPU8.buffer, params.transform, 12);
 

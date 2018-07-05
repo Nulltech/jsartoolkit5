@@ -115,7 +115,7 @@
 			var camera = new THREE.Camera();
 			camera.matrixAutoUpdate = false;
 			camera.projectionMatrix.fromArray(this.getCameraMatrix());
-
+			console.log(camera.projectionMatrix);
 			scene.add(camera);
 
 
@@ -132,23 +132,23 @@
 				video: video,
 
 				process: function() {
-					for (var i in self.threePatternMarkers) {
-						self.threePatternMarkers[i].visible = false;
-					}
-					for (var i in self.threeBarcodeMarkers) {
-						self.threeBarcodeMarkers[i].visible = false;
-					}
-					for (var i in self.threeNFTMarkers) {
-						self.threeNFTMarkers[i].visible = false;
-					}
-					for (var i in self.threeMultiMarkers) {
-						self.threeMultiMarkers[i].visible = false;
-						for (var j=0; j<self.threeMultiMarkers[i].markers.length; j++) {
-							if (self.threeMultiMarkers[i].markers[j]) {
-								self.threeMultiMarkers[i].markers[j].visible = false;
-							}
-						}
-					}
+					// for (var i in self.threePatternMarkers) {
+					// 	self.threePatternMarkers[i].visible = false;
+					// }
+					// for (var i in self.threeBarcodeMarkers) {
+					// 	self.threeBarcodeMarkers[i].visible = false;
+					// }
+					// for (var i in self.threeNFTMarkers) {
+					// 	self.threeNFTMarkers[i].visible = false;
+					// }
+					// for (var i in self.threeMultiMarkers) {
+					// 	self.threeMultiMarkers[i].visible = false;
+					// 	for (var j=0; j<self.threeMultiMarkers[i].markers.length; j++) {
+					// 		if (self.threeMultiMarkers[i].markers[j]) {
+					// 			self.threeMultiMarkers[i].markers[j].visible = false;
+					// 		}
+					// 	}
+					// }
 					self.process(video);
 				},
 
@@ -280,7 +280,6 @@
 
 				} else if (ev.data.type === artoolkit.BARCODE_MARKER) {
 					obj = this.threeBarcodeMarkers[ev.data.marker.idMatrix];
-
 				}
 				if (obj) {
 					obj.matrix.fromArray(ev.data.matrixGL_RH);
@@ -294,11 +293,14 @@
 			this.addEventListener('getNFTMarker', function(ev) {
 				var marker = ev.data.marker;
 				var obj;
-
 				obj = this.threeNFTMarkers[ev.data.marker.id];
 
 				if (obj) {
-					obj.matrix.elements.set(ev.data.matrix);
+					//well, this is awkward
+					ev.data.matrixGL_RH[12] /= 100;
+					ev.data.matrixGL_RH[13] /= 100;
+					ev.data.matrixGL_RH[14] /= 100;
+					obj.matrix.fromArray(ev.data.matrixGL_RH);
 					obj.visible = true;
 				}
 			});
@@ -324,7 +326,7 @@
 				var obj = this.threeMultiMarkers[marker];
 				if (obj && obj.markers && obj.markers[subMarkerID]) {
 					var sub = obj.markers[subMarkerID];
-					sub.matrix.fromArray(ev.data.matrix);
+					sub.matrix.fromArray(ev.data.matrixGL_RH);
 					sub.visible = (subMarker.visible >= 0);
 				}
 			});

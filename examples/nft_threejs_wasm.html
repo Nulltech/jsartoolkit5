@@ -115,36 +115,40 @@
                                 new THREE.MeshNormalMaterial()
                             );
                             sphere.material.shading = THREE.FlatShading;
-                            sphere.position.z = 40;
-                            sphere.position.x = 80;
-                            sphere.position.y = 80;
-                            sphere.scale.set(80, 80, 80);
+                            // sphere.position.z = 40;
+                            // sphere.position.x = 80;
+                            // sphere.position.y = 80;
+                            // sphere.scale.set(80, 80, 80);
 
                             var torus = new THREE.Mesh(
-                                new THREE.TorusGeometry(0.3, 0.2, 8, 8),
+                                new THREE.TorusGeometry(0.5, 0.5, 8, 8),
                                 new THREE.MeshNormalMaterial()
                             );
                             torus.material.shading = THREE.FlatShading;
-                            torus.position.z = 0.5;
-                            torus.rotation.x = Math.PI / 2;
+
+                            // arController.loadNFTMarker('DataNFT/py_mpp50705', function (markerId) {
+                            //     var markerRoot = arController.createThreeNFTMarker(markerId);
+                            //     markerRoot.add(torus);
+                            //     arScene.scene.add(markerRoot);
+                            // });
 
                             arController.loadNFTMarker('DataNFT/pinball', function (markerId) {
                                 var markerRoot = arController.createThreeNFTMarker(markerId);
-                                markerRoot.add(sphere);
-                                arScene.scene.add(markerRoot);
-                            });
-
-                            arController.loadMarker('Data/patt.hiro', function(markerId) {
-                                var markerRoot = arController.createThreeMarker(markerId);
-                                markerRoot.add(sphere);
-                                arScene.scene.add(markerRoot);
-                            });
-
-                            arController.loadMarker('Data/patt.kanji', function (markerId) {
-                                var markerRoot = arController.createThreeMarker(markerId);
                                 markerRoot.add(torus);
                                 arScene.scene.add(markerRoot);
                             });
+
+                            arController.loadMarker('Data/patt.hiro', function (markerId) {
+                                var markerRoot = arController.createThreeMarker(markerId);
+                                markerRoot.add(sphere);
+                                arScene.scene.add(markerRoot);
+                            });
+
+                            // arController.loadMarker('Data/patt.kanji', function (markerId) {
+                            //     var markerRoot = arController.createThreeMarker(markerId);
+                            //     markerRoot.add(torus);
+                            //     arScene.scene.add(markerRoot);
+                            // });
 
                             var tick = function () {
                                 arScene.process();
@@ -159,7 +163,6 @@
                             };
 
                             tick();
-
                         }
                     });
 
